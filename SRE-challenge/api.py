@@ -1,51 +1,63 @@
-from flask import Flask,render_template,request
+from flask import Flask, request
+from flask import render_template
 import pickle
-app=Flask(__name__)
+import numpy as np
 
-@app.route('/',methods=['GET'])
-def HomePage():
- return render_template('index.html')
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/result',methods=['POST','GET'])
+def get_delay():
+    if request.method=='POST':
+        result=request.form
+
+#Prepare the feature vector for prediction
+        pkl_file = open('x_data', 'rb')
+        index_dict = pickle.load(pkl_file)
+        new_vector = np.zeros(len(index_dict))
+  
+        try:
+               new_vector[index_dict['Terminal_'+str(result['Terminal'])]] = 1            
+        except:
+                 pass
+        try:
+                new_vector[index_dict['Weekday_'+str(result['Weekday'])]] = 1
+        except:
+                pass
+        try:
+               new_vector[index_dict['Airline_'+str(result['Airline'])]] = 1
+        except:
+                pass
+        try:
+                new_vector[index_dict['Origin_'+str(result['Origin'])]] = 1
+        except:
+                pass
+        try:
+                new_vector[index_dict['Destination_'+str(result['Destination'])]] = 1
+        except:
+                pass
+        try:
+                new_vector[index_dict['Scheduled Time_'+str(result['Scheduled Time'])]] = 1
+        except:
+                pass
+            
+        pkl_file = open('model_v1.pkl', 'rb')
+        adamodel = pickle.load(pkl_file)
+        new_vector = new_vector.reshape(1, -1)
+        Prediction = adamodel.predict(new_vector)
+        for i in Prediction:
+               if i == 1:
+                      Prediction ="will be"
+               if i == 0:
+                      Prediction ="won't get"
+            
+    return render_template('results.html',prediction=Prediction)       
 
 
-@app.route('/predict',methods=['GET','POST'])
-def index():
- if request.method=='POST':
-  try:
-   #month = int(request.form['month'])
-   day   = int(request.form['Fecha-I'])
-   flight_number = int(request.form['Vlo-I'])
-   schdl_dep = float(request.form['schdl_dep'])
-   dep_delay = float(request.form['dep_delay'])
-   schdl_arriv = float(request.form['schdl_arriv'])
-   divrtd = int(request.form['divrtd'])
-   cancld = int(request.form['cancld'])
-   air_sys_delay = float(request.form['air_sys_delay'])
-   secrty_delay = float(request.form['secrty_delay'])
-   airline_delay = float(request.form['airline_delay'])
-   late_air_delay = float(request.form['late_air_delay'])
-   wethr_delay  = float(request.form['wethr_delay'])
-
-   print('HI')
-   filename = 'finalized_model.sav'
-   loaded_model = pickle.load(open(filename, 'rb'))
-
-
-   import numpy as np
-   prediction=loaded_model.predict([[month,day,schdl_dep,dep_delay,schdl_arriv,divrtd,cancld,air_sys_delay,secrty_delay,
-                                     airline_delay,late_air_delay,wethr_delay]])
-   for i in prediction:
-    if i==1:
-     prediction='will be'
-    else:
-     prediction='wont get'
-
-
-   return render_template('results.html',prediction=prediction)
-  except Exception as e:
-    print('The Exception message is: ',e)
-    return 'something is wrong'
- else:
-  return render_template('index.html'),
-
-if __name__ == "__main__":
+    
+if __name__ == '__main__':
+    app.debug = True
     app.run()

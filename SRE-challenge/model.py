@@ -1,36 +1,62 @@
-# Importing the libraries
-import numpy as np
 import pandas as pd
+import numpy as np
+
+from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
+
+from sklearn.ensemble import AdaBoostClassifier
+
+import datetime
+import time
+from datetime import timedelta
+
+import os
 import pickle
 import requests
 import json
-import re
+import flask
+
+
 # Importing the dataset
-dataset = pd.read_csv('datasets/flightdata.csv')
+df = pd.read_csv('datasets/flightdata.csv', parse_dates=[0], infer_datetime_format=True)
 
-# Clean and prepare dataset
-dataset = dataset[["year","month","day","sched_dep_time","sched_arr_time","carrier","origin","dest","dep_delay","arr_delay"]]
-dataset.isnull().sum()
-
-dataset = dataset.fillna({"dep_delay": 1})
-dataset = dataset.fillna({"arr_delay": 1})
-
-number = preprocessing.LabelEncoder()
-dataset['carrier'] = number.fit_transform(dataset.carrier)
-dataset['origin'] = number.fit_transform(dataset.origin)
-dataset['dest'] = number.fit_transform(dataset.dest)
+# New Column and Format
+df['Scheduled DateTime'] = pd.to_datetime(df['Scheduled DateTime'], infer_datetime_format=True)
+df['Scheduled Time'] = df['Scheduled DateTime'].dt.strftime('%H:00')
+df['Delay? (20 min)'] = np.where(df['Minute Delay'] >= 20, 'Yes', 'No')
 
 
-# Splitting the dataset into the Training set and Test set
-X_train, X_test, y_train, y_test = train_test_split(dataset.drop('dep_delay', axis=1), dataset['dep_delay'], test_size=0.2)
-# Fitting Simple Linear Regression to the Training set
-regressor = LogisticRegression(class_weight = 'balanced') 
-regressor.fit(X_train, y_train)
-# Predicting the Test set results
-y_pred = regressor.predict(X_test)
-# Saving model to disk
-pickle.dump(regressor, open('model.pkl','wb'))
-# Loading model to compare the results
+traindf = df.drop(['Flight No.', 'Delay Type', 'Minute Delay', 'Month', 'Scheduled Date','Scheduled DateTime', 'Real Departure Time'], axis=1)
+traindf = traindf.dropna()
+traindf['Origin'] = "Dublin"
+traindf.head(3)
+
+# getting airline, weeekday and destination list
+
+list_airlines = traindf.Airline.unique()
+list_destination = traindf.Destination.unique()
+
+# weekdays = Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+
+newtraindf = pd.get_dummies(traindf)
+
+# Split Data
+x_data = newtraindf.drop(['Delay? (20 min)_No', 'Delay? (20 min)_Yes'],axis=1)
+y_data = newtraindf['Delay? (20 min)_Yes']
+x_train, x_test, y_train, y_test = train_test_split(x_data,y_data,test_size=0.26)
+
+
+adamodel = AdaBoostClassifier()
+adamodel.fit(x_train, y_train)
+
+y_pred = adamodel.predict(x_test)
+
+with open('model_v1.pkl', 'wb') as fid:
+    pickle.dump(adamodel, fid,2) 
+
+# get dictionary for reference later in form
+index_dict = dict(zip(x_data.columns,range(x_data.shape[1])))
+
+with open('x_data', 'wb') as fid:
+    pickle.dump(index_dict, fid,2) 
