@@ -13,7 +13,7 @@ def home():
 def get_delay():
     if request.method=='POST':
         result=request.form
-
+        print(result)
 #Prepare the feature vector for prediction
         pkl_file = open('x_data', 'rb')
         index_dict = pickle.load(pkl_file)
@@ -40,7 +40,7 @@ def get_delay():
         except:
                 pass
         try:
-                new_vector[index_dict['Scheduled Time_'+str(result['Scheduled Time'])]] = 1
+                new_vector[index_dict['ScheduledTime_'+str(result['ScheduledTime'])]] = 1
         except:
                 pass
             

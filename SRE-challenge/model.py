@@ -23,7 +23,7 @@ df = pd.read_csv('datasets/flightdata.csv', parse_dates=[0], infer_datetime_form
 
 # New Column and Format
 df['Scheduled DateTime'] = pd.to_datetime(df['Scheduled DateTime'], infer_datetime_format=True)
-df['Scheduled Time'] = df['Scheduled DateTime'].dt.strftime('%H:00')
+df['ScheduledTime'] = df['Scheduled DateTime'].dt.strftime('%H:00')
 df['Delay? (20 min)'] = np.where(df['Minute Delay'] >= 20, 'Yes', 'No')
 
 
