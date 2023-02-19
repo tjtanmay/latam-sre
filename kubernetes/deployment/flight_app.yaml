@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: flight-app
+ namespace: flight-app
+ labels:
+   app: flight-app
+spec:
+ selector:
+  matchLabels:
+   app: flight-app
+ template:
+  metadata:
+   labels:
+    app: flight-app
+  spec:
+    containers:
+    - image: tjtanmay25/app:latest
+      name: flight-delay-pred-app
+      imagePullPolicy: Always
+      ports:
+        - containerPort: 5000
