@@ -1,0 +1,6 @@
+dependencies:
+- name: iter8lib
+  repository: file://../iter8lib
+  version: 0.10.1
+digest: sha256:34718a9952dd8663afb34b0b9e601496176943cfe8a36e61d7021dedae973bd2
+generated: "2023-02-21T00:30:55.4829-06:00"
